@@ -1,4 +1,4 @@
-# Import main libs
+# importing libs
 import os
 import pandas as pd
 import plotly.express as px
@@ -7,430 +7,365 @@ import dash
 import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
+from jupyter_dash import JupyterDash
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output  # Load Data
+from dash.dependencies import Input, Output
 
-sourcelink = 'https://www.kaggle.com/austinreese/usa-housing-listings'
-fileurlraw = 'https://raw.githubusercontent.com/Printalect/Property-Listings-Dashboard-FV2/master/assets/property-listings-100000-d2.csv'
-rawdata    = pd.read_csv(fileurlraw)
+# vis variables
+import plotly.io as pio
+pio.templates.default = 'seaborn'
 
-type_options = ['house', 'townhouse', 'apartment']
-category_options = [
-    'baths', 'beds', 'cats_allowed', 'dogs_allowed',
-    'electric_vehicle_charge', 'laundry_options', 'parking_options',
-    'smoking_allowed', 'wheelchair_access'
-]
+color1 = '#cccccc'
+color2 = '#858585'
+color3 = '#5d5d5d'
 
-# still need to implement this if there are not eough values!
-rawdata = rawdata[rawdata['type'].isin(type_options)]
-rawdata = rawdata.groupby('state').filter(
-    lambda x: len(x) >= 100)  # only listings of 100 or more
-rawdata.reset_index(inplace=True)
+color4 = '#cc0000'
+color5 = '#e82127'
+color6 = '#c01419'
+color7 = '#ab2e32'
 
-# create a dict for state regions
-states_regions = rawdata[['state', 'region']]
-states_regions = states_regions.groupby('state')#.agg(counts=('region', 'count'))
-states_regions = states_regions['region'].unique().apply(list).to_dict()
+color8 = '#333333'
+color9 = '#000000'
 
-#app = JupyterDash(__name__, external_stylesheets=[dbc.themes.LUX])
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUX])
-server = app.server
+# enlarge the notebook
+from IPython.core.display import display, HTML
+display(HTML("<style>.container { width:95% !important; } </style>"))
+#-------------------------
+#-SECTION - row one
+#--------------------------------------------------
+catcol_select = sorted(['CarBody', 'FastchargePort', 'Segment'])
 
-dropdown_style_options = {
-    'width': '100%',
-    'display': 'flex',
+numcol_select = sorted([
+    'RoofLoad', 'Width', 'FastchargePowerMax', 'Wheelbase', 'Length',
+    'ChargePower', 'VehicleFuelEquivalent', 'TurningCircle', 'CargoVolumeMax',
+    'TowingWeightUnbraked', 'MaxPayload', 'CargoVolume', 'VehicleConsumption',
+    'TowingWeightBraked', 'Seats', 'RatedConsumption', 'Height', 'Range',
+    'ChargeSpeed', 'Acceleration', 'TopSpeed', 'RatedFuelEquivalent',
+    'BatteryCapacity', 'BatteryUseable', 'FastchargeSpeed', 'TotalPower',
+    'TotalTorque', 'WeightUnladen', 'GrossVehicleWeight', 'ElectricRange'
+])
+# setting required variables
+header_styling = {
+    #      'width': '100%',
+    'display': 'grid',
     'align-items': 'center',
-    'justify-content': 'center'
+    'justify-content': 'center',
+    'align-self': 'auto'
 }
 
-maintitle = html.Div(
-    [dbc.Row([(html.H1("Property Rent Listings Dashboard"))], justify="center")])
-#dbc.Row([(html.H2("National Data"))],justify="center"),
-#dbc.Row(dbc.Col(html.Div()))
-#--------------
-#-NATIIONAL
-nationallevel = html.Div([
-    #dbc.Row([(html.H2("National Data"))],justify="center"),
-    dbc.Row([
-        dbc.Col(html.Div(dcc.Graph(id='national_graph1'))),
-        dbc.Col(html.Div(dcc.Graph(id='national_graph2')))
-    ])
+dropdown_style_options = {
+    'display': 'flex',
+    'align-items': 'center',
+    'justify-content': 'center',
+}
+
+child_inherit = {'display': 'inherit'}
+#-------------------------
+#-SECTION - row one
+#--------------------------------------------------
+fileurlraw = 'https://raw.githubusercontent.com/Printalect/Electric-Vehicle-Dashboard-Euro/master/assets/ev_rawdata.parquet.gzip'
+rawdata = pd.read_parquet(fileurlraw)
+#-------------------------
+#-------------------------
+# #DEBUGGING BREAK#
+#  ADDING FIGURES
+#-------------------------
+#-------------------------
+#-SECTION - row one
+#--------------------------------------------------
+header_main = dbc.Col([
+    dbc.Row(html.H1('Electric Vehicle Models - 2020 European Market'),
+            justify='center'),
+    dbc.Row(html.H6('Review electric vehicle model specifications'),
+            justify='center'),
 ])
 
-nationalselector = html.Div([
-    dbc.Row([(html.H2("National Data"))], justify="center"),
-    dbc.Row([
-        dbc.Col(
-            html.Div([
-                html.Label([
-                    "Type Selection (National):",
-                    dcc.Dropdown(id='national_dropdown_type',
-                                 clearable=False,
-                                 multi=True,
-                                 value=type_options,
-                                 options=[{
-                                     'label': type_options[0].title(),
-                                     'value': type_options[0]
-                                 }, {
-                                     'label': type_options[1].title(),
-                                     'value': type_options[1]
-                                 }, {
-                                     'label': type_options[2].title(),
-                                     'value': type_options[2]
-                                 }])
-                ])
-            ],
-                     style=dropdown_style_options))
-    ])
+#-----------
+header_pie = dbc.Row(
+    [html.H3('Charts: Manufacturer, Model, & Category - Tesla')],
+    justify='center')
+header_treemaps = dbc.Row(
+    [html.H3('Charts: Manufacturer, Model, & Category Plus Range ')],
+    justify='center')
+header_scatter = dbc.Col([
+    dbc.Row(html.H3('Charts:Price Review by Specifications - Tesla-Yes/No'),
+            justify='center'),
+    dbc.Row(html.P(
+        'Cross compare current models by specifications like range, price, speed, and acceleration.'
+    ),
+            justify='center')
 ])
-#-NATIIONAL
-#--------------
-
-#--------------
-#-STATE-LEVEL
-statelevel = html.Div([
-    #dbc.Row([(html.H2("State Data"))],justify="center"),
-    dbc.Row([
-        dbc.Col(html.Div(dcc.Graph(id='state_graph1'))),
-        dbc.Col(html.Div(dcc.Graph(id='state_graph2')))
-    ])
-])
-
-statelevelselector = html.Div([
-    dbc.Row([(html.H2("State Data"))], justify="center"),
-    dbc.Row([
-        dbc.Col(
-            html.Div(
+#-------------------------
+#-SECTION - row one
+#--------------------------------------------------
+firstrow = html.Div([
+    dbc.Row(
+        [
+            # COLUMN: 1
+            dbc.Col(
                 [
-                    html.Label([
-                        "Type Selection (State):",
-                        dcc.Dropdown(
-                            id='states_dropdown_type',
-                            #clearable=False,
-                            multi=True,
-                            value=type_options,
-                            #justify='center',
-                            options=[{
-                                'label': type_options[0].title(),
-                                'value': type_options[0]
-                            }, {
-                                'label': type_options[1].title(),
-                                'value': type_options[1]
-                            }, {
-                                'label': type_options[2].title(),
-                                'value': type_options[2]
-                            }])
-                    ]),
-                    html.Label([
-                        "State Selection: ",
-                        dcc.Dropdown(id='state_level_states_dropdown',
-                                     clearable=False,
-                                     value='CA',
-                                     options=[{
-                                         'label': k,
-                                         'value': k
-                                     } for k in states_regions.keys()])
-                    ])
+                    # PIE PLOT 1
+                    #                     dbc.Row(html.P(' '), justify='center'),
+                    dbc.Row(dcc.Graph(id='pie_plot_1')),
                 ],
-                style=dropdown_style_options))
-    ])
-])
-
-#-STATE-LEVEL
-#--------------
-
-#--------------
-#-REGION-LEVEL
-regionlevel = html.Div([
-    #dbc.Row([(html.H2("Region (City & County)"))],justify="center"),
-    dbc.Row([
-        dbc.Col(html.Div(dcc.Graph(id='region_graph1'))),
-        dbc.Col(html.Div(dcc.Graph(id='region_graph2')))
-    ])
-])
-
-regionlevelselector = html.Div([
-    dbc.Row([(html.H2("Region (City & County)"))], justify="center"),
-    dbc.Row([
-        dbc.Col(
-            html.Div(
+                width=6),
+            # COLUMN: 2
+            dbc.Col(
                 [
-                    html.Label([
-                        "Type Selection (Region):",
-                        dcc.Dropdown(
-                            id='region_dropdown_type',
-                            #clearable=False,
-                            multi=True,
-                            value=type_options,
-                            #justify='center',
-                            options=[{
-                                'label': type_options[0].title(),
-                                'value': type_options[0]
-                            }, {
-                                'label': type_options[1].title(),
-                                'value': type_options[1]
-                            }, {
-                                'label': type_options[2].title(),
-                                'value': type_options[2]
-                            }])
-                    ]),
-                    html.Label([
-                        "State Selection:",
-                        dcc.Dropdown(id='region_level_states_dropdown',
-                                     clearable=False,
-                                     value='CA',
-                                     options=[{
-                                         'label': k,
-                                         'value': k
-                                     } for k in states_regions.keys()])
-                    ]),
-                    html.Label(
-                        [
-                            "Region Selection: ",
-                            dcc.Dropdown(id='regions_dropdown',
-                                         #multi=True
-                                         )
-                        ],
-                        style={'width': '300px'})
+                    # PIE PLOT 1
+                    dbc.Row([dcc.Graph(id='treemap_1')],
+                            style={'display': 'grid'})
                 ],
-                style=dropdown_style_options)),
-    ]),
+                width=6),
+        ],
+        "style={'height': '800px'}")
 ])
-
-#-REGION-LEVEL
-#--------------
-
-
-#--------------
-#-ADDITIONAL
-sourcelinks = html.Div([
-    #dbc.Row([(html.H2("Region (City & County)"))],justify="center"),
+#-----------
+# Build App
+firstrow_sel = html.Div([
     dbc.Row([
-        dbc.Col(html.Div(html.A('Data Source (click)', href=sourcelink, target='_blank')), style=dropdown_style_options),
+        html.Label([
+            "Select Category:",
+            dcc.Dropdown(id='categorical_dropdown',
+                         clearable=False,
+                         value=catcol_select[0],
+                         options=[{
+                             'label': c,
+                             'value': c
+                         } for c in catcol_select],
+                         style={'width': '300px'})
+        ]),
+    ],
+            style=dropdown_style_options),
+    dbc.Row(html.P('(Selector for 4 subsequent illustrations.)'),
+            justify='center'),
+    dbc.Row(html.P('Left:Category & Model, Right: Category & Manufacturer'),
+            justify='center'),
+])
+#-------------------------
+#-SECTION - row two
+#--------------------------------------------------
+secondrow = html.Div([
+    #     dbc.Row(html.P(
+    #         'The graphs below replicate the information above, yet also add a visual scale for range.'
+    #     ),
+    #             justify='center'),
+    dbc.Row([
+
+        # COLUMN: 1
+        dbc.Col([
+            dbc.Row([dcc.Graph(id='pie_plot_2')]),
+        ], width=6),
+        # COLUMN: 2
+        dbc.Col([
+            dbc.Row([dcc.Graph(id='treemap_2')], style={'display': 'grid'}),
+        ],
+                width=6),
     ])
 ])
-
+#-------------------------
+#-SECTION - row four
+#--------------------------------------------------
+forthrow = dbc.CardBody([
+    dbc.Row([
+        dbc.Col([
+            dbc.Row(dcc.Graph(id='scatterplot_1'), style={'display': 'grid'}),
+            dbc.Row(html.P('Note: Data Uses Metric System. (km, km/h, mm, m, etc.)'))
+        ]),
+        dbc.Col([
+            dbc.Row(dcc.Graph(id='scatterplot_2'), style={'display': 'grid'}),
+        ])
+    ])
+])
+#-----------
+# Build App
+numerical_sel1 = dbc.CardBody([
+    dbc.Row([
+        dbc.Col(html.Label([
+            "Select by Value:",
+            dcc.Dropdown(id='numerical_dropdown1',
+                         clearable=False,
+                         value='Range',
+                         options=[{
+                             'label': c,
+                             'value': c
+                         } for c in numcol_select],
+                         style={'width': '300px'})
+        ]),
+                style=dropdown_style_options),
+        dbc.Col(html.Label([
+            "Select by Value:",
+            dcc.Dropdown(id='numerical_dropdown2',
+                         clearable=False,
+                         value='Range',
+                         options=[{
+                             'label': c,
+                             'value': c
+                         } for c in numcol_select],
+                         style={'width': '300px'})
+        ]),
+                style=dropdown_style_options)
+    ])
+])
+#-------------------------
+#-SECTION - blank row
+#--------------------------------------------------
+# sourcelinks = html.Div([
+#     dbc.Row([
+#         dbc.Col(html.Div(
+#             html.A('Data Source (click)', href=sourcelink, target='_blank')),
+#                 style=dropdown_style_options),
+#     ])
+# ])
 
 blankrow = html.Div([dbc.Row([html.Br()])], style={'marginBottom': '1.5em'})
+#-------------------------
+#-------------------------
+# #DEBUGGING BREAK#
+#  ADDING FIGURES
+#-------------------------
+#-------------------------
+#-SECTION -
+#--------------------------------------------------
+# app = JupyterDash(__name__, external_stylesheets=[dbc.themes.LUX])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUX])
+server = app.server
+#-------------------------
+#-SECTION -
+#--------------------------------------------------
+# second pieplot
+@app.callback(Output('pie_plot_1', 'figure'),
+              [Input('categorical_dropdown', 'value')])
+#-----------
+def pie_plot_1(attribute2):
+    plotdata = rawdata.sort_values('Tesla')
+    fig = px.sunburst(plotdata,
+                      path=[str(attribute2), 'Model'],
+                      color='Tesla',
+                      color_discrete_sequence=[color1, color6],
+                      height=800,
+                      title=('Category: {}').format(attribute2))
+    return\
+        fig.update_layout(showlegend=False)
+#-----------
+# first pieplot
+@app.callback(Output('pie_plot_2', 'figure'),
+              [Input('categorical_dropdown', 'value')])
+#-----------
+def pie_plot_2(attribute='value'):
+    plotdata = rawdata.sort_values('Range')
+    fig = px.sunburst(
+        plotdata,
+        path=[attribute, 'Model'],
+        color='Range',
+        color_continuous_scale=[color1, color3],
+        #          color_continuous_scale=px.colors.sequential.Greys,
+        title=('Category:{}').format(attribute),
+        height=800,
+    ).update_traces(opacity=0.9)
+    return\
+        fig
+#-------------------------
+#-SECTION -
+#--------------------------------------------------
+# first treemap
+@app.callback(Output('treemap_1', 'figure'),
+              [Input('categorical_dropdown', 'value')])
+#-----------
+def treemap_1(attribute):
+    plotdata = rawdata.sort_values('Tesla')
+    fig = px.treemap(plotdata,
+                     path=[str(attribute), 'Manufacturer'],
+                     color='Tesla',
+                     hover_data=['Manufacturer', attribute],
+                     color_discrete_sequence=[color1, color6],
+                     height=800,
+                     title=('Category:{}').format(attribute))
+    return\
+        fig
+#-----------
+# first treemap
+@app.callback(Output('treemap_2', 'figure'),
+              [Input('categorical_dropdown', 'value')])
+#-----------
+def treemap_2(attribute='value'):
+    plotdata = rawdata.sort_values('Range')
+    fig = px.treemap(plotdata,
+                     path=[attribute, 'Manufacturer'],
+                     color='Range',
+                     hover_data=['Manufacturer', attribute],
+                     color_continuous_scale=[color1, color3],
+                     title=('Category:{}').format(attribute),
+                     height=800)  #.update(layout_showlegend=False)
+    return\
+        fig#.update(showlegend=False)
+#-----------
+# scatterplot
+@app.callback(Output('scatterplot_1', 'figure'),
+              [Input('numerical_dropdown1', 'value')])
+#-----------
+def scatterplot_1(attribute='value'):
+    fig = px.scatter(
+        rawdata,
+        x=attribute,
+        y='PriceAVG',
+        color='Tesla',
+        symbol='CarBody',
+        hover_data=['Manufacturer', 'Model', 'CarBody', 'Segment', 'PriceAVG'],
+        color_discrete_sequence=(color6, color2),
+        opacity=0.7,
+        title=('Attribute:{}').format(attribute),
+        height=600)
+    return\
+        fig
+#-----------
+# scatterplot
+@app.callback(Output('scatterplot_2', 'figure'),
+              [Input('numerical_dropdown2', 'value')])
+#-----------
+def scatterplot_2(attribute='value'):
+    fig = px.scatter(
+        rawdata,
+        x=attribute,
+        y='PriceAVG',
+        color='Tesla',
+        symbol='CarBody',
+        hover_data=['Manufacturer', 'Model', 'CarBody', 'Segment', 'PriceAVG'],
+        color_discrete_sequence=(color6, color2),
+        opacity=0.7,
+        title=('Attribute:{}').format(attribute),
+        height=600)
+    return\
+        fig
+#-------------------------
+#-------------------------
+# #DEBUGGING BREAK#
+#  RUN DASHBOARD
+#-------------------------
+#-------------------------
+#-SECTION -
+#--------------------------------------------------
+app.layout = dbc.Card([
+    dbc.CardBody([header_main, blankrow]),
+    dbc.CardBody([
+        header_pie,
+        firstrow_sel,
+        firstrow,
+        blankrow,
+        blankrow,
+#         header_treemaps,
+        secondrow,
+        blankrow,
+#         thirdrow,
+        blankrow,
+    ]),
+    dbc.CardBody([header_scatter, numerical_sel1, forthrow, blankrow]),
+],  color="secondary", outline=True)
+#-----------
+# app.run_server(debug=True, mode='external', 
+#                port=8102
+#               )
 
-#-ADDITIONAL
-#--------------
-
-
-
-#  - - - -
-app.layout = html.Div([
-    maintitle, blankrow, nationalselector, nationallevel, blankrow,
-    statelevelselector, statelevel, blankrow, regionlevelselector, regionlevel,
-    blankrow, sourcelinks
-])
-
-
-#  - - - -
-#--------------v
-#-NATIIONAL
-# Define callback to update graph
-@app.callback(Output('national_graph1', 'figure'),
-              [Input("national_dropdown_type", "value")])
-def update_figure(plot_type):
-    plotdata = rawdata[(rawdata['type'].isin(plot_type))]
-    plotdata = plotdata.groupby('state').agg(avg_price=('price', 'mean'))
-    plotdata = plotdata.reset_index()
-    return px.choropleth(
-                        plotdata,
-                        locations='state',
-                        color='avg_price',
-                        locationmode='USA-states',
-                        title=('Mean Price by State'),
-                        labels={'avg_price':'Avg Price',
-                                'price': 'Price',
-                                'state':'State',
-                               'count':'Count'},
-                        color_continuous_scale=px.colors.sequential.Blues
-                    )\
-        .update_layout(
-            geo_scope='usa' # Plot only the USA instead of globe
-        )
-
-
-# Define callback to update graph
-@app.callback(Output('national_graph2', 'figure'),
-              [Input("national_dropdown_type", "value")])
-def update_figure(plot_type):
-    plotdata = rawdata[(rawdata['type'].isin(plot_type))]
-    plotdata = plotdata.groupby('state').agg(count=('state', 'count'))
-    plotdata = plotdata.reset_index().sort_values('count', ascending=False)
-    plotdata = plotdata.dropna(subset=['count'], axis=0)
-    return px.bar(
-        plotdata[0:20],
-        x='state',
-        y='count',
-        color='count',
-        opacity=0.8,
-        title=('Total Properties Per State'),
-        labels={
-            'avg_price': 'Avg Price',
-            'price': 'Price',
-            'state': 'State',
-            'count': 'Count',
-            'region': 'Region'
-        },
-        color_continuous_scale=px.colors.sequential.Blues,
-    ).update_xaxes(categoryorder='total descending')
-
-
-#-NATIIONAL
-#--------------^
-
-
-#--------------v
-#-STATE-LEVEL
-# Define callback to update graph
-@app.callback(Output('state_graph1', 'figure'), [
-    Input("states_dropdown_type", "value"),
-    Input("state_level_states_dropdown", "value")
-])
-def update_figure(plot_type, plot_state):
-    plotdata = rawdata
-    return px.scatter_mapbox(
-        plotdata[(plotdata['type'].isin(plot_type))
-                 & (plotdata['state'] == plot_state)],
-        lat="lat",
-        lon="long",
-        color="price",
-        size="price",
-        mapbox_style="carto-positron",
-        text='state',
-        hover_name='type',
-        hover_data=['type', 'price', 'sqfeet', 'baths', 'beds'],
-        #title=('Listing Data by Price & Type in {}'.format(str(plotstate))),
-        color_continuous_scale=px.colors.sequential.Blues,
-        size_max=15,
-        zoom=4,
-        title=('Detailed Information Per Listing in {}'.format(
-            str(plot_state))),
-        labels={
-            'avg_price': 'Avg Price',
-            'price': 'Price',
-            'state': 'State',
-            'count': 'Count',
-            'type': 'Type',
-            'sqfeet': 'SQ FT',
-            'baths': 'Baths',
-            'beds': 'Beds'
-        },
-        height=500)
-
-
-@app.callback(Output('state_graph2', 'figure'), [
-    Input("states_dropdown_type", "value"),
-    Input("state_level_states_dropdown", "value")
-])
-def update_figure(plot_type, plot_state):
-    plotdata = rawdata[(rawdata['state'] == plot_state)
-                       & (rawdata['type'].isin(plot_type))]
-    plotdata = plotdata.groupby('region').agg(count=('region', 'count'))
-    plotdata = plotdata.reset_index().sort_values('count', ascending=False)
-    plotdata = plotdata.dropna(subset=['count'], axis=0)
-    return px.bar(
-        plotdata[0:20],
-        x='region',
-        y='count',
-        color='count',
-        opacity=0.8,
-        color_continuous_scale=px.colors.sequential.Blues,
-        title=('Total Properties Per Region in {}'.format(str(plot_state))),
-        labels={
-            'avg_price': 'Avg Price',
-            'price': 'Price',
-            'state': 'State',
-            'region': 'Region',
-            'count': 'Count',
-            'type': 'Type',
-            'sqfeet': 'SQ FT',
-            'baths': 'Baths',
-            'beds': 'Beds',
-        },
-    ).update_xaxes(categoryorder='total descending')
-
-#-STATE-LEVEL
-#--------------^
-
-
-#--------------
-#-REGION-LEVEL
-@app.callback(
-    dash.dependencies.Output('regions_dropdown', 'options'),
-    [dash.dependencies.Input('region_level_states_dropdown', 'value')])
-def set_cities_options(selected_country):
-    return [{'label': i, 'value': i} for i in states_regions[selected_country]]
-
-@app.callback(dash.dependencies.Output('regions_dropdown', 'value'),
-              [dash.dependencies.Input('regions_dropdown', 'options')])
-def set_cities_value(available_options):
-    return available_options[0]['value']
-
-
-# Define callback to update graph
-@app.callback(Output('region_graph1', 'figure'), [
-    Input("region_dropdown_type", "value"),
-    Input("region_level_states_dropdown", "value")
-])
-def update_figure(plot_type, plot_state):
-    plotdata = rawdata[(rawdata['state'] == plot_state)
-                       & (rawdata['type'].isin(plot_type))]
-    plotdata = plotdata.groupby('region').agg(avg_price=('price', 'mean'))
-    plotdata = plotdata.reset_index().sort_values('avg_price', ascending=False)
-    plotdata = plotdata.dropna(subset=['avg_price'], axis=0)
-    return px.bar(
-        plotdata[0:20],
-        x='region',
-        y='avg_price',
-        color='avg_price',
-        opacity=0.8,
-        title=('Average Price, Regions in {}'.format(str(plot_state))),
-        labels={
-            'avg_price': 'Avg Price',
-            'price': 'Price',
-            'state': 'State',
-            'count': 'Count',
-            'region': 'Region'
-        },
-        color_continuous_scale=px.colors.sequential.Blues,
-    )
-
-
-# Define callback to update graph
-@app.callback(Output('region_graph2', 'figure'), [
-    Input("region_dropdown_type", "value"),
-    Input("region_level_states_dropdown", "value"),
-    Input("regions_dropdown", "value")
-])
-def update_figure(plot_type, plot_state, plot_region):
-    plotdata = rawdata.copy()
-    return px.histogram(
-        plotdata[(plotdata['type'].isin(plot_type))
-                 & (plotdata['state'] == plot_state)
-                 & (plotdata['region'].isin([plot_region]))],
-        x='price',
-        color='region',
-        #nbins=50,
-        #histnorm='density',
-        marginal='violin',
-        opacity=0.8,
-        title=('Price Distribution: {}'.format(str(plot_region))),
-        labels={
-            'avg_price': 'Avg Price',
-            'price': 'Price',
-            'state': 'State',
-            'count': 'Count',
-            'region': 'Region'
-        },
-        color_discrete_sequence=px.colors.sequential.Blues_r)
-
-#-REGION-LEVEL
-#--------------
-
-#app.run_server(debug=True, mode='external', port=8106)
 if __name__ == '__main__':
-    app.run_server(debug=False, port=8051)
+    app.run_server(debug=True, port=8901)
+#-------------------------
