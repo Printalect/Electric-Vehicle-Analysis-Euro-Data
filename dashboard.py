@@ -1,6 +1,7 @@
 # importing libs
 import os
 import pandas as pd
+import fastparquet
 import plotly.express as px
 # Dash libs
 import dash
@@ -12,8 +13,8 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 
 # vis variables
-import plotly.io as pio
-pio.templates.default = 'seaborn'
+# import plotly.io as pio
+# pio.templates.default = 'seaborn'
 
 color1 = '#cccccc'
 color2 = '#858585'
@@ -28,8 +29,8 @@ color8 = '#333333'
 color9 = '#000000'
 
 # enlarge the notebook
-from IPython.core.display import display, HTML
-display(HTML("<style>.container { width:95% !important; } </style>"))
+# from IPython.core.display import display, HTML
+# display(HTML("<style>.container { width:95% !important; } </style>"))
 #-------------------------
 #-SECTION - row one
 #--------------------------------------------------
@@ -367,5 +368,5 @@ app.layout = dbc.Card([
 #               )
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=8901)
+    app.run_server(debug=False, port=8901)
 #-------------------------
