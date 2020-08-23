@@ -17,6 +17,7 @@ idna==2.8
 ipython-genutils==0.2.0
 itsdangerous==1.1.0
 Jinja2==2.10.1
+jupyter-dash==0.3.0
 jupyter-core==4.5.0
 MarkupSafe==1.1.1
 nbformat==4.4.0
