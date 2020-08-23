@@ -8,7 +8,6 @@ import dash
 import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
-from jupyter_dash import JupyterDash
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 
@@ -228,7 +227,7 @@ blankrow = html.Div([dbc.Row([html.Br()])], style={'marginBottom': '1.5em'})
 #-------------------------
 #-SECTION -
 #--------------------------------------------------
-# app = JupyterDash(__name__, external_stylesheets=[dbc.themes.LUX])
+#app = JupyterDash(__name__, external_stylesheets=[dbc.themes.LUX])
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUX])
 server = app.server
 #-------------------------
