@@ -49,7 +49,7 @@ def run_job():
         ping_app,
         'cron',
         day_of_week='mon-fri',
-        hour='6-20',
+        hour='6-19',
         minute='0-59/20',
         jitter=180,
         timezone='America/Los_Angeles',
