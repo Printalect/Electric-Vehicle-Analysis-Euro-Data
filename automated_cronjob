@@ -48,15 +48,13 @@ def run_job():
     sched.add_job(
         ping_app,
         'cron',
-        day_of_week='mon-fri',
+        day_of_week='mon-sat',
         hour='6-19',
         minute='0-59/20',
-        jitter=180,
         timezone='America/Los_Angeles',
         end_date='2020-12-30',
         id='my_job_id')
     sched.start()
-
 
 if __name__ == '__main__':
     run_job()
